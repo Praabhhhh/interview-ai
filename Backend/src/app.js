@@ -17,9 +17,19 @@ app.use(cors({
   credentials: true
 }))
 
-// ✅ TEST ROUTE (IMPORTANT)
+// TEST
 app.get("/test", (req, res) => {
   res.send("Backend working ✅")
+})
+
+// DEBUG
+app.get("/check", (req, res) => {
+  res.send("CHECK ROUTE WORKING ✅")
+})
+
+// ROOT
+app.get("/", (req, res) => {
+  res.send("API WORKING ROOT ✅")
 })
 
 // ✅ ROUTES
