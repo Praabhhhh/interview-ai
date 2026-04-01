@@ -31,5 +31,10 @@ app.use("/api/auth", authRouter)
 app.use("/api/interview", interviewRouter)
 
 
+app.get("/test", (req, res) => {
+    res.send("Backend working ✅");
+});
+
+
 
 module.exports = app
