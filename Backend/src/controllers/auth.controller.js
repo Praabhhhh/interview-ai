@@ -3,6 +3,14 @@ const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 const tokenBlacklistModel = require("../models/blacklist.model")
 
+// ✅ common cookie options (IMPORTANT)
+const cookieOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "None",
+    path: "/"
+}
+
 async function registerUserController(req, res) {
 
     const { username, email, password } = req.body
@@ -14,12 +22,12 @@ async function registerUserController(req, res) {
     }
 
     const isUserAlreadyExists = await userModel.findOne({
-        $or: [ { username }, { email } ]
+        $or: [{ username }, { email }]
     })
 
     if (isUserAlreadyExists) {
         return res.status(400).json({
-            message: "Account already exists with this email address or username"
+            message: "Account already exists"
         })
     }
 
@@ -37,20 +45,12 @@ async function registerUserController(req, res) {
         { expiresIn: "1d" }
     )
 
-    // ✅ FIXED
-    res.cookie("token", token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "None"
-    })
+    // ✅ SET COOKIE
+    res.cookie("token", token, cookieOptions)
 
     res.status(201).json({
         message: "User registered successfully",
-        user: {
-            id: user._id,
-            username: user.username,
-            email: user.email
-        }
+        user
     })
 }
 
@@ -81,20 +81,12 @@ async function loginUserController(req, res) {
         { expiresIn: "1d" }
     )
 
-    // ✅ FIXED
-    res.cookie("token", token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "None"
-    })
+    // ✅ SET COOKIE
+    res.cookie("token", token, cookieOptions)
 
     res.status(200).json({
-        message: "User loggedIn successfully.",
-        user: {
-            id: user._id,
-            username: user.username,
-            email: user.email
-        }
+        message: "Login successful",
+        user
     })
 }
 
@@ -106,15 +98,10 @@ async function logoutUserController(req, res) {
         await tokenBlacklistModel.create({ token })
     }
 
-    // ✅ FIXED
-    res.clearCookie("token", {
-        httpOnly: true,
-        secure: true,
-        sameSite: "None"
-    })
+    res.clearCookie("token", cookieOptions)
 
     res.status(200).json({
-        message: "User logged out successfully"
+        message: "Logout successful"
     })
 }
 
@@ -124,12 +111,7 @@ async function getMeController(req, res) {
     const user = await userModel.findById(req.user.id)
 
     res.status(200).json({
-        message: "User details fetched successfully",
-        user: {
-            id: user._id,
-            username: user.username,
-            email: user.email
-        }
+        user
     })
 }
 

@@ -9,28 +9,23 @@ const interviewRouter = require("./routes/interview.routes")
 
 const app = express()
 
-// ✅ ADD THIS LINE (VERY IMPORTANT)
+// ✅ VERY IMPORTANT (for Render / proxy)
 app.set("trust proxy", 1)
 
 app.use(express.json())
 app.use(cookieParser())
 
+// ✅ FINAL CORS FIX
 app.use(cors({
   origin: "https://interview-ai-eight-sable.vercel.app",
   credentials: true
-}));
+}))
 
 // TEST
 app.get("/test", (req, res) => {
   res.send("Backend working ✅")
 })
 
-// DEBUG
-app.get("/check", (req, res) => {
-  res.send("CHECK ROUTE WORKING ✅")
-})
-
-// ROOT
 app.get("/", (req, res) => {
   res.send("API WORKING ROOT ✅")
 })
