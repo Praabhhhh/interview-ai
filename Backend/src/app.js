@@ -13,9 +13,12 @@ app.use(express.json())
 app.use(cookieParser())
 
 app.use(cors({
-  origin: "http://localhost:5173", // ya tera frontend URL
+  origin: [
+    "http://localhost:5173",
+    "https://interview-ai-eight-sable.vercel.app"
+  ],
   credentials: true
-}))
+}));
 
 // TEST
 app.get("/test", (req, res) => {
