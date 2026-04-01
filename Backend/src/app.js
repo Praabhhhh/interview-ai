@@ -2,6 +2,8 @@ const express = require("express")
 const cookieParser = require("cookie-parser")
 const cors = require("cors")
 
+console.log("APP FILE LOADED ✅")
+
 const authRouter = require("./routes/auth.routes")
 const interviewRouter = require("./routes/interview.routes")
 
