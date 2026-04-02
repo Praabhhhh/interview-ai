@@ -53,24 +53,41 @@ Job Description: ${jobDescription}`
 
 async function generateResumePdf({ resume, selfDescription, jobDescription }) {
     try {
-        const doc = new PDFDocument()
 
+        // 🔥 AI se resume generate kar
+        const prompt = `
+Create a professional resume using the following details:
+
+Resume Content: ${resume}
+Self Description: ${selfDescription}
+Job Description: ${jobDescription}
+
+Format it properly with:
+- Name (use candidate)
+- Summary
+- Skills
+- Experience (from resume)
+- Projects (if possible)
+
+Keep it clean and professional.
+`
+
+ const response = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: prompt
+})
+
+const aiText = response.text || "Resume could not be generated properly."
+
+        // 📄 PDF generate
+        const doc = new PDFDocument()
         let buffers = []
         doc.on("data", buffers.push.bind(buffers))
 
-        doc.fontSize(20).text("Resume", { align: "center" })
+        doc.fontSize(20).text("AI Generated Resume", { align: "center" })
         doc.moveDown()
 
-        doc.fontSize(14).text("Profile:")
-        doc.fontSize(12).text(selfDescription)
-        doc.moveDown()
-
-        doc.fontSize(14).text("Skills & Experience:")
-        doc.fontSize(12).text(resume)
-        doc.moveDown()
-
-        doc.fontSize(14).text("Target Role:")
-        doc.fontSize(12).text(jobDescription)
+        doc.fontSize(12).text(aiText)
 
         doc.end()
 
