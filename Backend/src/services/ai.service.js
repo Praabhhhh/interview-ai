@@ -8,7 +8,7 @@ const ai = new GoogleGenAI({
 })
 
 const interviewReportSchema = z.object({
-    matchScore: z.number().describe("A score between 0 and 100 indicating how well the candidate's profile matches the job describe"),
+    matchScore: z.number(),
     technicalQuestions: z.array(z.object({
         question: z.string(),
         intention: z.string(),
@@ -54,21 +54,25 @@ Job Description: ${jobDescription}`
 async function generateResumePdf({ resume, selfDescription, jobDescription }) {
     try {
 
+        // 🔥 CLEAN AI PROMPT
         const prompt = `
-Create a professional resume using the following details:
+Create a professional resume.
+
+STRICT RULES:
+- No symbols like #, *, **, ---
+- No markdown formatting
+- No quotes ""
+- Only clean plain text
+- Use headings like:
+  PROFESSIONAL SUMMARY
+  TECHNICAL SKILLS
+  EXPERIENCE
+  PROJECTS
+  EDUCATION
 
 Resume Content: ${resume}
 Self Description: ${selfDescription}
 Job Description: ${jobDescription}
-
-Use proper sections:
-PROFESSIONAL SUMMARY
-TECHNICAL SKILLS
-EXPERIENCE
-PROJECTS
-EDUCATION
-
-Keep it clean and professional.
 `
 
         const response = await ai.models.generateContent({
@@ -76,50 +80,52 @@ Keep it clean and professional.
             contents: prompt
         })
 
-        const aiText = response.text || "Resume could not be generated properly."
+        let aiText = response.text || "Resume could not be generated properly."
 
-        // ✅ UPDATED PDF DESIGN
+        // 🔥 CLEAN TEXT (REMOVE GARBAGE)
+        aiText = aiText
+            .replace(/[#*`"]/g, "")
+            .replace(/\*\*/g, "")
+            .replace(/__/g, "")
+
         const doc = new PDFDocument({ margin: 50 })
 
         let buffers = []
         doc.on("data", buffers.push.bind(buffers))
 
         // Header
-        doc.fontSize(20).fillColor("#000").text("CANDIDATE", { align: "center" })
+        doc.fontSize(20).text("CANDIDATE", { align: "center" })
         doc.moveDown(0.5)
 
-        doc.fontSize(10).fillColor("#555")
+        doc.fontSize(10)
             .text("City, Country | +91 XXXXXXXX | email@example.com", { align: "center" })
         doc.moveDown(1)
 
         const lines = aiText.split("\n")
 
         lines.forEach(line => {
-            const lower = line.toLowerCase().trim()
+            const text = line.trim()
 
+            if (!text) {
+                doc.moveDown(0.5)
+                return
+            }
+
+            const lower = text.toLowerCase()
+
+            // headings
             if (
                 lower.includes("summary") ||
                 lower.includes("skills") ||
                 lower.includes("experience") ||
                 lower.includes("projects") ||
-                lower.includes("education") ||
-                lower.includes("certifications")
+                lower.includes("education")
             ) {
                 doc.moveDown(1)
-                doc.fontSize(14)
-                    .fillColor("#000")
-                    .text(line.toUpperCase(), { underline: true })
+                doc.fontSize(14).text(text.toUpperCase())
                 doc.moveDown(0.5)
-            } 
-            else if (line.trim() === "") {
-                doc.moveDown(0.5)
-            } 
-            else {
-                doc.font("Helvetica").fontSize(11)
-                    .fillColor("#333")
-                    .text(line, {
-                        lineGap: 2
-                    })
+            } else {
+                doc.fontSize(11).text(text)
             }
         })
 
