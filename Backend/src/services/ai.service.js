@@ -54,7 +54,6 @@ Job Description: ${jobDescription}`
 async function generateResumePdf({ resume, selfDescription, jobDescription }) {
     try {
 
-        // 🔥 AI se resume generate kar
         const prompt = `
 Create a professional resume using the following details:
 
@@ -62,32 +61,67 @@ Resume Content: ${resume}
 Self Description: ${selfDescription}
 Job Description: ${jobDescription}
 
-Format it properly with:
-- Name (use candidate)
-- Summary
-- Skills
-- Experience (from resume)
-- Projects (if possible)
+Use proper sections:
+PROFESSIONAL SUMMARY
+TECHNICAL SKILLS
+EXPERIENCE
+PROJECTS
+EDUCATION
 
 Keep it clean and professional.
 `
 
- const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompt
-})
+        const response = await ai.models.generateContent({
+            model: "gemini-3-flash-preview",
+            contents: prompt
+        })
 
-const aiText = response.text || "Resume could not be generated properly."
+        const aiText = response.text || "Resume could not be generated properly."
 
-        // 📄 PDF generate
-        const doc = new PDFDocument()
+        // ✅ UPDATED PDF DESIGN
+        const doc = new PDFDocument({ margin: 50 })
+
         let buffers = []
         doc.on("data", buffers.push.bind(buffers))
 
-        doc.fontSize(20).text("AI Generated Resume", { align: "center" })
-        doc.moveDown()
+        // Header
+        doc.fontSize(20).fillColor("#000").text("CANDIDATE", { align: "center" })
+        doc.moveDown(0.5)
 
-        doc.fontSize(12).text(aiText)
+        doc.fontSize(10).fillColor("#555")
+            .text("City, Country | +91 XXXXXXXX | email@example.com", { align: "center" })
+        doc.moveDown(1)
+
+        const lines = aiText.split("\n")
+
+        lines.forEach(line => {
+            const lower = line.toLowerCase().trim()
+
+            if (
+                lower.includes("summary") ||
+                lower.includes("skills") ||
+                lower.includes("experience") ||
+                lower.includes("projects") ||
+                lower.includes("education") ||
+                lower.includes("certifications")
+            ) {
+                doc.moveDown(1)
+                doc.fontSize(14)
+                    .fillColor("#000")
+                    .text(line.toUpperCase(), { underline: true })
+                doc.moveDown(0.5)
+            } 
+            else if (line.trim() === "") {
+                doc.moveDown(0.5)
+            } 
+            else {
+                doc.font("Helvetica").fontSize(11)
+                    .fillColor("#333")
+                    .text(line, {
+                        lineGap: 2
+                    })
+            }
+        })
 
         doc.end()
 
