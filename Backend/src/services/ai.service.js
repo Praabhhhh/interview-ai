@@ -47,7 +47,26 @@ Job Description: ${jobDescription}`
         }
     })
 
-    return JSON.parse(response.text)
+    let data
+
+    try {
+        data = JSON.parse(response.text)
+    } catch (err) {
+        console.log("AI PARSE ERROR:", err)
+        console.log("RAW RESPONSE:", response.text)
+
+        // ✅ fallback safe data
+        data = {
+            matchScore: 50,
+            technicalQuestions: [],
+            behavioralQuestions: [],
+            skillGaps: [],
+            preparationPlan: [],
+            title: "Generated Report"
+        }
+    }
+
+    return data
 }
 
 
