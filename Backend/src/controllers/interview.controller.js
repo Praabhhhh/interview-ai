@@ -10,18 +10,39 @@ const interviewReportModel = require("../models/interviewReport.model")
  */
 async function generateInterViewReportController(req, res) {
 
-    const resumeContent = await (new pdfParse.PDFParse(Uint8Array.from(req.file.buffer))).getText()
     const { selfDescription, jobDescription } = req.body
 
+    let resumeText = ""
+
+    // ✅ SAFE resume handling
+    if (req.file) {
+        try {
+            const parsed = await (new pdfParse.PDFParse(Uint8Array.from(req.file.buffer))).getText()
+            resumeText = parsed.text
+        } catch (err) {
+            console.log("PDF PARSE ERROR:", err)
+            return res.status(400).json({
+                message: "Error reading resume file"
+            })
+        }
+    }
+
+    // ❌ agar dono empty hain
+    if (!resumeText && !selfDescription) {
+        return res.status(400).json({
+            message: "Either resume or self description is required"
+        })
+    }
+
     const interViewReportByAi = await generateInterviewReport({
-        resume: resumeContent.text,
+        resume: resumeText,
         selfDescription,
         jobDescription
     })
 
     const interviewReport = await interviewReportModel.create({
         user: req.user.id,
-        resume: resumeContent.text,
+        resume: resumeText,
         selfDescription,
         jobDescription,
         ...interViewReportByAi
@@ -31,7 +52,6 @@ async function generateInterViewReportController(req, res) {
         message: "Interview report generated successfully.",
         interviewReport
     })
-
 }
 
 /**
